@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#19594B"/><g transform="translate(51.2 51.2) scale(0.8)">
+  <!-- TraffiCount: estrada em perspetiva com os dois sentidos de contagem (chegada e saída) -->
+  <rect width="512" height="512" fill="#19594B"/>
+  <path d="M120 452 L216 84 H296 L392 452 Z" fill="#0E2E27"/>
+  <path d="M120 452 L216 84" stroke="#F4FAF6" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <path d="M392 452 L296 84" stroke="#F4FAF6" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <g fill="#F4FAF6">
+    <path d="M250 96 H262 L263 128 H249 Z"/>
+    <path d="M248 158 H264 L266 204 H246 Z"/>
+    <path d="M245 240 H267 L270 300 H242 Z"/>
+    <path d="M241 340 H271 L275 420 H237 Z"/>
+  </g>
+  <!-- chegada: desce (azul) -->
+  <path d="M178 262 V346 H154 L186 404 L218 346 H194 V262 Z" fill="#6FA7E8"/>
+  <!-- saída: sobe (laranja) -->
+  <path d="M318 404 V320 H294 L326 262 L358 320 H334 V404 Z" fill="#F0995E"/>
+</g></svg>
