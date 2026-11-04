@@ -834,6 +834,16 @@ function renderList(){
   app.appendChild(scr);
 }
 
+// link de configuração: …/trafficount/#ligar=<base64 de {"url":…,"codigo":…}> liga o telemóvel à folha e limpa o endereço
+(function(){
+  var m=/^#ligar=([A-Za-z0-9+\/=_-]+)$/.exec(location.hash||'');
+  if(!m) return;
+  try{
+    var j=JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))));
+    if(/^https:\/\/script\.google\.com\//.test(j.url) && j.codigo){ pref('cloud', {url:j.url, codigo:j.codigo}); setTimeout(function(){ toast('Telemóvel ligado à Google Sheet da equipa'); }, 300); view = view==='count' ? 'count' : 'list'; }
+  }catch(e){}
+  try{ history.replaceState(null, '', location.pathname); }catch(e){ location.hash=''; }
+})();
 render();
 setTimeout(function(){ syncNow(false); }, 1500);
 if('serviceWorker' in navigator && location.protocol==='https:'){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
