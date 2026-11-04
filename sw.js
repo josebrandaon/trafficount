@@ -1,6 +1,6 @@
 // TraffiCount — guarda a aplicação no telemóvel para funcionar sem internet.
 // Ao publicar uma nova versão, altere VERSION para os telemóveis receberem a atualização.
-const VERSION = 'trafficount-v5';
+const VERSION = 'trafficount-v6';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './vendor/leaflet/leaflet.css', './vendor/leaflet/leaflet.js',
@@ -30,7 +30,7 @@ self.addEventListener('fetch', e => {
     })));
     return;
   }
-  if (/cartocdn\.com|arcgisonline\.com/.test(url.hostname)) {
+  if (/tile\.openstreetmap\.org|arcgisonline\.com/.test(url.hostname)) {
     // mapa: rede primeiro; guarda as últimas zonas vistas para uso sem internet
     e.respondWith(fetch(req).then(r => {
       if (r.ok || r.type === 'opaque') caches.open(TILES).then(c => c.put(req, r.clone()).then(() => c.keys()).then(k => { if (k.length > TILE_MAX) return c.delete(k[0]); }));

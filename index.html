@@ -637,12 +637,13 @@ function renderStart(){
   if(window.L){
     try{
       map=L.map('map',{zoomControl:true, attributionControl:true}).setView(pos?[pos.lat,pos.lon]:[15.95,-23.95], pos?17:8);
-      // Os servidores tile.openstreetmap.org bloqueiam páginas abertas a partir de ficheiro (sem Referer).
-      // Usa-se o mapa da CARTO, feito com dados OpenStreetMap; se falhar, passa para o mapa da Esri.
-      var errs=0, base=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:20, subdomains:'abcd', attribution:'© OpenStreetMap · © CARTO'});
+      // Publicada em https, a aplicação usa o mapa OpenStreetMap. Aberta a partir de ficheiro (sem endereço web),
+      // o OpenStreetMap recusa os pedidos, por isso usa-se o mapa da Esri; também é a alternativa se o OSM falhar.
+      var errs=0, osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19, attribution:'© OpenStreetMap'});
       var alt=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19, attribution:'© Esri · OpenStreetMap'});
       var sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19, attribution:'© Esri, Maxar'});
-      base.on('tileerror', function(){ if(++errs===4 && map.hasLayer(base)){ map.removeLayer(base); alt.addTo(map); } });
+      var base = location.protocol==='https:' ? osm : alt;
+      if(base===osm) osm.on('tileerror', function(){ if(++errs===4 && map.hasLayer(osm)){ map.removeLayer(osm); alt.addTo(map); } });
       base.addTo(map);
       L.control.layers({'Mapa':base, 'Satélite':sat}, null, {position:'topright'}).addTo(map);
       map.on('click', function(e){ pos={lat:e.latlng.lat, lon:e.latlng.lng, acc:null, manual:true}; line.className='gpsline warn'; line.textContent=posText(); gpsLabel('Atualizar localização'); show(); check(); });
@@ -835,15 +836,18 @@ function renderList(){
 }
 
 // link de configuração: …/trafficount/#ligar=<base64 de {"url":…,"codigo":…}> liga o telemóvel à folha e limpa o endereço
-(function(){
+function applyLink(){
   var m=/^#ligar=([A-Za-z0-9+\/=_-]+)$/.exec(location.hash||'');
-  if(!m) return;
+  if(!m) return false;
   try{
     var j=JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))));
     if(/^https:\/\/script\.google\.com\//.test(j.url) && j.codigo){ pref('cloud', {url:j.url, codigo:j.codigo}); setTimeout(function(){ toast('Telemóvel ligado à Google Sheet da equipa'); }, 300); view = view==='count' ? 'count' : 'list'; }
   }catch(e){}
   try{ history.replaceState(null, '', location.pathname); }catch(e){ location.hash=''; }
-})();
+  return true;
+}
+applyLink();
+window.addEventListener('hashchange', function(){ if(applyLink()){ render(); syncNow(false); } });
 render();
 setTimeout(function(){ syncNow(false); }, 1500);
 if('serviceWorker' in navigator && location.protocol==='https:'){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
