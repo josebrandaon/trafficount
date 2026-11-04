@@ -1,0 +1,18 @@
+TraffiCount — ligação à Google Sheet (configuração única, ~5 minutos)
+
+1. No Google Drive, crie uma Google Sheet nova (ex.: «TraffiCount – Contagens»).
+2. Na folha: Extensões → Apps Script. Apague o conteúdo e cole o ficheiro Code.gs.
+3. Na linha CODIGO_EQUIPA, troque ALTERAR-ESTE-CODIGO por um código só da equipa. Guarde.
+4. Implementar → Nova implementação → engrenagem → Aplicação Web.
+     Executar como: Eu
+     Quem tem acesso: Qualquer pessoa
+   Clique em Implementar e autorize com a sua conta Google
+   (se aparecer «A Google não validou esta app»: Avançadas → Aceder a ... (não seguro)).
+5. Copie o URL da aplicação web (termina em /exec).
+6. Em cada telemóvel: TraffiCount → lista de contagens → Nuvem → Configurar ligação.
+   Cole o URL e o código da equipa e toque em «Testar e guardar».
+
+As folhas «Sessoes» (uma linha por contagem, com totais e link para o mapa) e «Eventos»
+(um veículo, pausa ou retoma por linha) são criadas no primeiro envio.
+Se alterar o script, use Implementar → Gerir implementações → editar → Nova versão,
+para manter o mesmo URL.
