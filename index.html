@@ -114,10 +114,21 @@
   .gpsline.warn{ color:var(--warn); } .gpsline.warn::before{ background:var(--warn); }
   .gpsline.err{ color:var(--danger); border-color:color-mix(in srgb, var(--danger) 30%, var(--border)); } .gpsline.err::before{ background:var(--danger); }
 
+  /* ecrã de nova contagem: cabe todo no ecrã; o mapa ocupa o espaço que sobra */
+  .screen.start{ height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)); min-height:520px; gap:10px; padding-block:10px 8px; }
+  .screen.start .mapbox{ aspect-ratio:auto; flex:1 1 auto; min-height:170px; }
+  .screen.start .gpsline{ position:absolute; z-index:500; left:50%; bottom:10px; transform:translateX(-50%); max-width:calc(100% - 20px); box-shadow:var(--shadow-lift); }
+  .screen.start .leaflet-bottom.leaflet-right{ bottom:46px; }
+  .screen.start .fields{ padding:12px 14px; gap:10px 12px; }
+  .screen.start .field{ gap:4px; }
+  .screen.start .foot{ padding-top:2px; }
+  .btn.dim{ opacity:.55; }
+  .screen.start .bar{ flex-wrap:nowrap; min-height:40px; }
+  .screen.start .bar h1{ white-space:nowrap; font-size:19px; }
   /* formulário */
   .fields{ display:grid; grid-template-columns:1fr 1fr; gap:14px 12px; background:var(--surface); border:1px solid var(--border);
     border-radius:var(--r-lg); box-shadow:var(--shadow); padding:16px; }
-  @media (max-width:360px){ .fields{ grid-template-columns:1fr; } }
+  @media (max-width:330px){ .fields{ grid-template-columns:1fr; } }
   .field{ display:flex; flex-direction:column; gap:6px; min-width:0; }
   .field.full{ grid-column:1 / -1; }
   .field label{ font-size:16px; font-weight:600; color:var(--ink-soft); display:flex; align-items:center; gap:7px; letter-spacing:.005em; }
@@ -319,7 +330,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.6';
+var APP_VERSION='3.6.1';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
@@ -653,20 +664,20 @@ function render(){ cleanup(); app.innerHTML=''; window.scrollTo(0,0);
 // ---------- ecrã 1: início ----------
 var pos = null;   // {lat, lon, acc, manual}
 function renderStart(){
-  var scr=el('div',{class:'screen'});
+  var scr=el('div',{class:'screen start'});
   var whenEl=el('span',{class:'when num'},[dHuman(Date.now())+' · '+hm(Date.now())]);
   timers.push(setInterval(function(){ whenEl.textContent=dHuman(Date.now())+' · '+hm(Date.now()); }, 15000));
   var nSaved=DB.order.filter(function(id){ return DB.sessions[id]; }).length;
-  scr.appendChild(el('div',{class:'bar'},[el('h1',{},['Nova contagem']), whenEl]));
+  scr.appendChild(el('div',{class:'bar'},[el('div',{class:'row', style:'gap:2px;align-items:center;min-width:0;flex-wrap:nowrap'},[el('button',{class:'btn btn-sm btn-ghost', type:'button', style:'padding-left:2px;padding-right:6px', 'aria-label':'Voltar às contagens ('+nSaved+')', onclick:function(){ go('list'); }},[ico('back')]), el('h1',{},['Nova contagem'])]), whenEl]));
 
-  var mapBox=el('div',{class:'mapbox'},[el('div',{id:'map'}), el('div',{class:'mapmsg', id:'mapmsg'},['A carregar o mapa…'])]);
-  scr.appendChild(mapBox);
   var line=el('div',{class:'gpsline'},[pos ? posText() : 'Capte a posição no posto.']);
+  var mapBox=el('div',{class:'mapbox'},[el('div',{id:'map'}), el('div',{class:'mapmsg', id:'mapmsg'},['A carregar o mapa…']), line]);
+  scr.appendChild(mapBox);
   if(pos) line.className='gpsline ok';
   var gpsBtn=el('button',{class:'btn btn-accent btn-block btn-lg', type:'button'});
   function gpsLabel(t){ gpsBtn.innerHTML=''; gpsBtn.appendChild(ico('target')); gpsBtn.appendChild(document.createTextNode(t)); }
   gpsLabel(pos ? 'Atualizar localização' : 'Captar localização');
-  scr.appendChild(gpsBtn); scr.appendChild(line);
+  scr.appendChild(gpsBtn);
 
   var fS1=field('Chegada',null,'ex.: Vindo do interior de Santiago', pref('dir1')||'');
   var fS2=field('Partida',null,'ex.: Da Cidade da Praia para o interior', pref('dir2')||'');
@@ -674,19 +685,17 @@ function renderStart(){
   scr.appendChild(el('div',{class:'fields'},[fS1.w, fS2.w, fObs.w]));
 
   var startBtn=el('button',{class:'btn btn-accent btn-block btn-lg', type:'button'},['Iniciar contagem']);
-  var hint=el('div',{class:'note', style:'text-align:center'});
-  function check(){ var ok=!!pos && fObs.i.value.trim(); startBtn.disabled=!ok;
-    hint.textContent = !pos ? 'Falta a localização do posto.' : (!fObs.i.value.trim() ? 'Falta o nome do observador.' : ''); }
+  function check(){ var ok=!!pos && fObs.i.value.trim(); startBtn.classList.toggle('dim', !ok); return ok; }
   fObs.i.addEventListener('input', check); check();
   startBtn.addEventListener('click', function(){
+    if(!check()){ toast(!pos ? 'Falta a localização do posto' : 'Falta o nome do observador'); return; }
     var now=Date.now(), s={ id:uid(), appVersion:APP_VERSION, posto:'', lat:pos.lat, lon:pos.lon, acc:pos.manual?null:pos.acc, posManual:!!pos.manual,
       observador:fObs.i.value.trim(), dir1:fS1.i.value.trim(), dir2:fS2.i.value.trim(),
       data:dISO(now), startedAt:now, endedAt:null, paused:false, pauseStarted:null, pauses:[], pausedUnplaced:0, currentDir:1, log:[] };
     pref('dir1', fS1.i.value.trim()); pref('dir2', fS2.i.value.trim()); pref('obs', s.observador);
     DB.sessions[s.id]=s; DB.order.unshift(s.id); DB.activeId=s.id; save(); pos=null; go('count');
   });
-  scr.appendChild(startBtn); scr.appendChild(hint);
-  scr.appendChild(el('button',{class:'btn btn-ghost btn-sm', type:'button', style:'align-self:center', onclick:function(){ go('list'); }},[ico('list'), 'Ver todas as contagens ('+nSaved+')']));
+  scr.appendChild(startBtn);
   scr.appendChild(footer());
   app.appendChild(scr);
 
