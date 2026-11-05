@@ -117,8 +117,7 @@
   /* ecrã de nova contagem: cabe todo no ecrã; o mapa ocupa o espaço que sobra */
   .screen.start{ height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)); min-height:520px; gap:10px; padding-block:10px 8px; }
   .screen.start .mapbox{ aspect-ratio:auto; flex:1 1 auto; min-height:170px; }
-  .screen.start .gpsline{ position:absolute; z-index:500; left:50%; bottom:10px; transform:translateX(-50%); max-width:calc(100% - 20px); box-shadow:var(--shadow-lift); }
-  .screen.start .leaflet-bottom.leaflet-right{ bottom:46px; }
+  .screen.start .gpsline{ position:absolute; z-index:500; left:50%; bottom:28px; transform:translateX(-50%); max-width:calc(100% - 20px); box-shadow:var(--shadow-lift); }
   .screen.start .fields{ padding:12px 14px; gap:10px 12px; }
   .screen.start .field{ gap:4px; }
   .screen.start .foot{ padding-top:2px; }
@@ -349,7 +348,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.6.10';
+var APP_VERSION='3.6.11';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
