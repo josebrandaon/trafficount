@@ -247,6 +247,23 @@
   .stats small{ font-size:11.5px; color:var(--ink-soft); }
   .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   .row .push{ margin-left:auto; }
+  .listhead{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:6px 2px -2px; }
+  .listhead .section-label{ margin:0; }
+  .selbtn{ min-height:32px; padding:4px 10px; font-size:13px; font-weight:600; color:var(--primary); }
+  .card.selectable .cardhead{ justify-content:flex-start !important; gap:10px; flex-wrap:nowrap; }
+  .card.selectable .cardhead .t{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14.5px; }
+  .card.selectable .cardhead .pill{ margin-left:auto; }
+  .tick{ width:22px; height:22px; border-radius:7px; border:2px solid var(--border-strong); display:grid; place-items:center; flex:none; color:#fff; }
+  .tick svg{ width:15px; height:15px; }
+  .card.picked{ border-color:var(--danger); box-shadow:0 0 0 1px var(--danger) inset; }
+  .card.picked .tick{ background:var(--danger); border-color:var(--danger); }
+  .selbar{ position:sticky; bottom:10px; z-index:5; display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r-lg); padding:8px 8px 8px 14px; box-shadow:0 6px 24px rgba(15,23,42,.18); }
+  .selbar .selinfo{ font-size:13px; color:var(--ink-soft); margin-right:auto; white-space:nowrap; }
+  .selbar .selinfo b{ color:var(--ink); font-size:15px; }
+  .selbar .btn-danger{ min-height:40px; white-space:nowrap; padding-inline:12px; }
+  .selbar .btn{ white-space:nowrap; flex:none; }
+  .selbar .btn-danger[disabled]{ opacity:.45; }
   .pill{ font-size:11.5px; font-weight:600; padding:4px 10px; border-radius:99px; background:var(--surface-2); color:var(--ink-soft); white-space:nowrap; }
   .pill.live{ background:var(--primary-soft); color:var(--primary); }
   .pill.sent{ background:color-mix(in srgb, var(--ok) 13%, var(--surface)); color:var(--ok); }
@@ -298,7 +315,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.2';
+var APP_VERSION='3.3';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
@@ -571,7 +588,7 @@ function syncNow(manual){
 }
 window.addEventListener('online', function(){ syncNow(false); });
 
-var cloudEdit=false, openCard=null;
+var cloudEdit=false, openCard=null, selMode=false, selSet={};
 function cloudPanel(){
   var cfg=cloudCfg(), box=el('div',{class:'panel cloud'});
   if(cloudEdit || !cfg){
@@ -878,6 +895,24 @@ function renderSummary(){
 }
 
 // ---------- lista ----------
+// barra de seleção múltipla: selecionar todas e eliminar de uma vez (com confirmação)
+function selBar(ids){
+  var n=Object.keys(selSet).length, all=n===ids.length;
+  var pend=Object.keys(selSet).filter(function(k){ var x=DB.sessions[k]; return x && (!x.endedAt || (cloudCfg() && !x.syncedAt)); }).length;
+  var del=el('button',{class:'btn btn-danger', type:'button'},[ico('trash'), n?'Eliminar ('+n+')':'Eliminar']), armed=false; if(!n) del.disabled=true;
+  del.addEventListener('click', function(){
+    if(!n) return;
+    if(!armed){ armed=true; del.textContent=pend?'Confirmar · '+pend+' não enviada'+(pend>1?'s':''):'Confirmar eliminação'; setTimeout(function(){ if(!del.isConnected) return; armed=false; del.innerHTML=''; del.appendChild(ico('trash')); del.appendChild(document.createTextNode('Eliminar ('+n+')')); }, 3000); return; }
+    Object.keys(selSet).forEach(function(k){ delete DB.sessions[k]; if(DB.activeId===k) DB.activeId=null; });
+    DB.order=DB.order.filter(function(x){ return !selSet[x]; }); save();
+    toast(n+(n===1?' contagem eliminada':' contagens eliminadas')); selSet={}; selMode=false; render();
+  });
+  return el('div',{class:'selbar'},[
+    el('div',{class:'selinfo'},[el('b',{class:'num'},[String(n)]), n===1?' selecionada':' selecionadas']),
+    el('button',{class:'btn btn-sm', type:'button', onclick:function(){ var y=window.scrollY; selSet={}; if(!all) ids.forEach(function(k){ selSet[k]=true; }); render(); window.scrollTo(0,y); }},[all?'Nenhuma':'Todas']),
+    del ]);
+}
+
 function renderList(){
   var scr=el('div',{class:'screen'});
   var dark = isDark();
@@ -887,7 +922,10 @@ function renderList(){
   var ids=DB.order.filter(function(id){ return DB.sessions[id]; });
   scr.appendChild(el('div',{class:'section-label'},['Nuvem']));
   scr.appendChild(cloudPanel());
-  if(ids.length) scr.appendChild(el('div',{class:'section-label'},['Contagens · '+ids.length]));
+  if(!ids.length){ selMode=false; selSet={}; }
+  Object.keys(selSet).forEach(function(k){ if(!DB.sessions[k]) delete selSet[k]; });
+  if(ids.length) scr.appendChild(el('div',{class:'listhead'},[el('div',{class:'section-label'},['Contagens · '+ids.length]),
+    el('button',{class:'btn btn-sm btn-ghost selbtn', type:'button', onclick:function(){ var y=window.scrollY; selMode=!selMode; selSet={}; openCard=null; render(); window.scrollTo(0,y); }},[selMode?'Cancelar':'Selecionar']) ]));
   if(!ids.length) scr.appendChild(el('div',{class:'empty'},['Ainda não há contagens neste telemóvel.']));
   ids.forEach(function(id){
     var s=DB.sessions[id], tt=totals(s), a=0, b=0; ORDER.forEach(function(c){ a+=tt[c][1]; b+=tt[c][2]; });
@@ -895,11 +933,14 @@ function renderList(){
     del.addEventListener('click', function(){ if(!armed){ armed=true; del.textContent='Confirmar eliminação'; setTimeout(function(){ armed=false; del.innerHTML=''; del.appendChild(ico('trash')); del.appendChild(document.createTextNode('Eliminar')); }, 3000); return; }
       delete DB.sessions[id]; DB.order=DB.order.filter(function(x){ return x!==id; }); if(DB.activeId===id) DB.activeId=null; save(); render(); });
     // lista compacta: só a 1.ª linha; tocar abre o registo (um de cada vez)
-    var open = openCard===id;
-    var card=el('div',{class:'card'+(open?' open':' closed')});
+    var open = !selMode && openCard===id, picked=!!selSet[id];
+    var card=el('div',{class:'card'+(open?' open':' closed')+(selMode?' selectable':'')+(picked?' picked':'')});
     var top=el('div',{class:'row', style:'justify-content:space-between'},[el('div',{class:'t num'},[dHuman(s.startedAt)+' · '+hm(s.startedAt)+(s.endedAt?'–'+hm(s.endedAt):'')]), (function(){ var c=!s.endedAt?['live','Em curso']:(s.syncedAt?['sent','Enviada']:(cloudCfg()?['pend','Por enviar']:['','Concluída'])); return el('span',{class:'pill '+c[0]},[c[1]]); })()]);
     top.classList.add('cardhead');
-    var hb=el('button',{type:'button', class:'cardtoggle', 'aria-expanded':String(open), 'aria-label':(open?'Fechar':'Abrir')+' contagem de '+dHuman(s.startedAt)+' '+hm(s.startedAt), onclick:function(){ var y=window.scrollY; openCard = open ? null : id; render(); window.scrollTo(0,y); }});
+    if(selMode){ top.firstChild.textContent=dHuman(s.startedAt).replace(/\/\d{4}$/,'')+' · '+hm(s.startedAt)+(s.endedAt?'–'+hm(s.endedAt):''); top.insertBefore(el('span',{class:'tick', html:picked?UI.check:''}), top.firstChild); }
+    var hb = selMode
+      ? el('button',{type:'button', class:'cardtoggle', role:'checkbox', 'aria-checked':String(picked), 'aria-label':'Selecionar contagem de '+dHuman(s.startedAt)+' '+hm(s.startedAt), onclick:function(){ var y=window.scrollY; if(selSet[id]) delete selSet[id]; else selSet[id]=true; render(); window.scrollTo(0,y); }})
+      : el('button',{type:'button', class:'cardtoggle', 'aria-expanded':String(open), 'aria-label':(open?'Fechar':'Abrir')+' contagem de '+dHuman(s.startedAt)+' '+hm(s.startedAt), onclick:function(){ var y=window.scrollY; openCard = open ? null : id; render(); window.scrollTo(0,y); }});
     card.appendChild(top); card.appendChild(hb);
     if(open){ [
       el('div',{class:'s'},[el('span',{},[ico('user'), s.observador||'—']), el('span',{class:'num'},[ico('pin'), coord(s)])]),
@@ -914,6 +955,7 @@ function renderList(){
     ].forEach(function(x){ card.appendChild(x); }); }
     scr.appendChild(card);
   });
+  if(selMode) scr.appendChild(selBar(ids));
   var fi=el('input',{type:'file', accept:'.json,application/json'}); fi.addEventListener('change', function(){ if(fi.files[0]) importBackup(fi.files[0]); fi.value=''; });
   scr.appendChild(el('div',{class:'section-label'},['Exportar e cópia de segurança']));
   if(ids.length) scr.appendChild(el('button',{class:'btn btn-block', type:'button', onclick:exportShp},[ico('map'), 'Exportar pontos (SHP)']));
