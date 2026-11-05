@@ -938,7 +938,16 @@ applyLink();
 window.addEventListener('hashchange', function(){ if(applyLink()){ render(); syncNow(false); } });
 render();
 setTimeout(function(){ syncNow(false); }, 1500);
-if('serviceWorker' in navigator && location.protocol==='https:'){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
+if('serviceWorker' in navigator && location.protocol==='https:'){
+  navigator.serviceWorker.register('sw.js', {updateViaCache:'none'}).then(function(r){ try{ r.update(); }catch(e){} }).catch(function(){});
+  // nova versão instalada: recarrega para a mostrar (nunca a meio de uma contagem)
+  var hadCtrl=!!navigator.serviceWorker.controller, reloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    if(!hadCtrl || reloaded) return;
+    var counting = DB.activeId && DB.sessions[DB.activeId] && !DB.sessions[DB.activeId].endedAt;
+    if(!counting){ reloaded=true; location.reload(); }
+  });
+}
 })();
 </script>
 </body>

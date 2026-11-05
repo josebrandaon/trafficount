@@ -1,6 +1,6 @@
 // TraffiCount — guarda a aplicação no telemóvel para funcionar sem internet.
 // Ao publicar uma nova versão, altere VERSION para os telemóveis receberem a atualização.
-const VERSION = 'trafficount-v8';
+const VERSION = 'trafficount-v9';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './vendor/leaflet/leaflet.css', './vendor/leaflet/leaflet.js',
@@ -22,8 +22,15 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  if (url.origin === location.origin && (req.mode === 'navigate' || /\/(index\.html)?$|\.webmanifest$|\.json$/.test(url.pathname))) {
+    // página principal: rede primeiro (versão mais recente); cache só sem internet
+    e.respondWith(caches.open(VERSION).then(c => fetch(req, {cache:'no-store'}).then(r => {
+      if (r.ok) c.put(req, r.clone()); return r;
+    }).catch(() => c.match(req, {ignoreSearch:true}).then(hit => hit || c.match('./index.html')))));
+    return;
+  }
   if (url.origin === location.origin) {
-    // aplicação: responde da cache e atualiza em segundo plano
+    // restantes ficheiros: responde da cache e atualiza em segundo plano
     e.respondWith(caches.open(VERSION).then(c => c.match(req, {ignoreSearch:true}).then(hit => {
       const net = fetch(req).then(r => { if (r.ok) c.put(req, r.clone()); return r; }).catch(() => hit);
       return hit || net;
