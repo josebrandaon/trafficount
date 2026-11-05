@@ -295,6 +295,18 @@
   .cloud .fields{ border:none; box-shadow:none; padding:0; background:transparent; grid-template-columns:1fr; }
   .note{ font-size:12.5px; color:var(--ink-soft); line-height:1.5; }
   .empty{ text-align:center; padding:32px 16px; color:var(--ink-soft); font-size:14px; background:var(--surface); border:1px dashed var(--border-strong); border-radius:var(--r-lg); }
+  .chart{ display:flex; flex-direction:column; gap:10px; }
+  .chart-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+  .chart-head b{ font-size:14px; }
+  .legend{ display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft); }
+  .legend i{ width:10px; height:10px; border-radius:3px; display:inline-block; margin-left:6px; }
+  .crow2{ display:grid; grid-template-columns:minmax(0,40%) 1fr; gap:10px; align-items:center; }
+  .clab{ font-size:12.5px; color:var(--ink-soft); line-height:1.2; }
+  .cbars{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .cbar{ display:flex; align-items:center; gap:6px; height:12px; }
+  .cbar .fill{ display:block; height:100%; min-width:2px; border-radius:0 4px 4px 0; }
+  .cbar .fill.d1{ background:var(--s1); } .cbar .fill.d2{ background:var(--s2); }
+  .cbar .val{ font-size:11.5px; font-weight:600; color:var(--ink-soft); }
   .tiles{ display:grid; grid-template-columns:1fr 1fr 1.2fr; gap:8px; }
   .tile{ background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:12px; box-shadow:var(--shadow); min-width:0; }
   .tile .k{ font-size:11.5px; font-weight:600; color:var(--ink-soft); display:flex; align-items:center; gap:6px; }
@@ -330,7 +342,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.6.2';
+var APP_VERSION='3.6.3';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
@@ -823,7 +835,7 @@ function groupCell(s, L, d, t, onChange){
   function arm(ms){ clearTimeout(tm); tm=setTimeout(function(){ if(trio.querySelector('.fix') || trio.querySelector('.holding')){ arm(1500); return; } close(); }, ms); }
   function open(){ if(s.paused) return; cell.classList.add('open'); main.setAttribute('aria-expanded','true'); arm(5000); if(navigator.vibrate){ try{ navigator.vibrate(8); }catch(e){} } }
   var trio=el('div',{class:'trio', style:'grid-template-columns:repeat('+L.ids.length+',minmax(0,1fr))'}, L.ids.map(function(id){ return countButton(s, CAT_BY_ID[id], d, t[id][d], changed, true, function(){ arm(350); }); }));
-  trio.addEventListener('pointerdown', function(){ arm(5000); });
+  trio.addEventListener('pointerdown', function(){ arm(HOLD_MS+3000); });  // dá tempo à correção de 5 s sem fechar a meio
   main.addEventListener('click', open);
   main.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); open(); } });
   main.addEventListener('contextmenu', function(e){ e.preventDefault(); });
@@ -890,12 +902,22 @@ function renderSummary(){
     el('dt',{},['Duração efetiva']), el('dd',{class:'num'},[dur(elapsed(s))]),
     el('dt',{},['Observador']), el('dd',{},[s.observador||'—']),
     el('dt',{},['Localização']), el('dd',{class:'num'},[coord(s)]),
-    el('dt',{},[el('i',{class:'dot', style:'background:var(--s1);margin-right:6px'}), 'Chegada']), el('dd',{},[dirTxt(s,1)||'—']),
-    el('dt',{},[el('i',{class:'dot', style:'background:var(--s2);margin-right:6px'}), 'Partida']), el('dd',{},[dirTxt(s,2)||'—']) ])]));
+    el('dt',{},['Chegada']), el('dd',{},[dirTxt(s,1)||'—']),
+    el('dt',{},['Partida']), el('dd',{},[dirTxt(s,2)||'—']) ])]));
   scr.appendChild(el('div',{class:'tiles'},[
-    el('div',{class:'tile'},[el('div',{class:'k'},[el('i',{class:'dot', style:'background:var(--s1)'}), 'Chegada']), el('div',{class:'v num'},[g1])]),
-    el('div',{class:'tile'},[el('div',{class:'k'},[el('i',{class:'dot', style:'background:var(--s2)'}), 'Partida']), el('div',{class:'v num'},[g2])]),
+    el('div',{class:'tile'},[el('div',{class:'k'},['Chegada']), el('div',{class:'v num'},[g1])]),
+    el('div',{class:'tile'},[el('div',{class:'k'},['Partida']), el('div',{class:'v num'},[g2])]),
     el('div',{class:'tile grand'},[el('div',{class:'k'},['Total']), el('div',{class:'v num'},[g1+g2])]) ]));
+  // gráfico de barras: veículos por classe, chegada e partida lado a lado
+  var mx=1; ORDER.forEach(function(id){ mx=Math.max(mx, t[id][1], t[id][2]); });
+  var chart=el('div',{class:'panel chart'},[el('div',{class:'chart-head'},[el('b',{},['Veículos por classe']),
+    el('span',{class:'legend'},[el('i',{style:'background:var(--s1)'}), 'Chegada', el('i',{style:'background:var(--s2)'}), 'Partida'])])]);
+  ORDER.forEach(function(id){ var a=t[id][1], b=t[id][2];
+    chart.appendChild(el('div',{class:'crow2'},[el('div',{class:'clab'},[CAT_BY_ID[id].full]),
+      el('div',{class:'cbars'},[
+        el('div',{class:'cbar'},[el('span',{class:'fill d1', style:'width:'+(100*a/mx)+'%'}), el('span',{class:'val num'},[a])]),
+        el('div',{class:'cbar'},[el('span',{class:'fill d2', style:'width:'+(100*b/mx)+'%'}), el('span',{class:'val num'},[b])]) ]) ])); });
+  scr.appendChild(chart);
   var tb=el('tbody');
   ORDER.forEach(function(id){ var a=t[id][1], b=t[id][2]; tb.appendChild(el('tr',{},[el('td',{},[el('i',{class:'dot', style:'background:'+CAT_BY_ID[id].color}), CAT_BY_ID[id].full]), el('td',{class:'num'},[a]), el('td',{class:'num'},[b]), el('td',{class:'num'},[a+b])])); });
   scr.appendChild(el('div',{class:'tablewrap'},[el('table',{},[
