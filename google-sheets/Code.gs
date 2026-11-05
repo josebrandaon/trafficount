@@ -16,7 +16,7 @@
 
 const CODIGO_EQUIPA = 'ALTERAR-ESTE-CODIGO';
 
-const CLASSES = ['NM', 'MC', 'LP', 'LM', 'LX', 'PP', 'PM', 'PX'];
+const CLASSES = ['NM', 'MC', 'LP', 'LM', 'LX', 'PP', 'PM'];
 const CABECALHO_SESSOES = [
   'sessao_id', 'data', 'inicio', 'fim', 'duracao_min', 'n_pausas', 'observador',
   'sentido1_chegada', 'sentido2_partida', 'lat', 'lon', 'precisao_m', 'origem_posicao'
@@ -66,18 +66,29 @@ function doPost(e) {
 function obterFolha(ss, nome, cabecalho) {
   let f = ss.getSheetByName(nome);
   if (f && f.getLastColumn() > 0) {
-    // Cabeçalho de uma versão anterior da app: se a folha tiver dados, guarda-a com outro nome;
-    // se estiver vazia, apenas reescreve o cabeçalho.
-    const atual = f.getRange(1, 1, 1, f.getLastColumn()).getValues()[0].join('|');
-    if (atual !== cabecalho.join('|')) {
-      if (f.getLastRow() > 1) {
-        f.setName(nome + '_antiga_' + Utilities.formatDate(new Date(), 'Atlantic/Cape_Verde', 'yyyyMMdd_HHmm'));
-        f = null;
-      } else {
-        f.clear();
-        f.getRange(1, 1, 1, cabecalho.length).setValues([cabecalho]).setFontWeight('bold');
-        f.setFrozenRows(1);
+    const atual = f.getRange(1, 1, 1, f.getLastColumn()).getValues()[0].map(String);
+    if (atual.join('|') !== cabecalho.join('|')) {
+      // Cabeçalho de uma versão anterior da app: ajusta as colunas sem reescrever os valores
+      // (evita que o Sheets reinterprete datas e números). Colunas retiradas ficam numa cópia.
+      if (atual.some(c => c && cabecalho.indexOf(c) < 0) && f.getLastRow() > 1) {
+        f.copyTo(ss).setName(nome + '_copia_' + Utilities.formatDate(new Date(), 'Atlantic/Cape_Verde', 'yyyyMMdd_HHmm'));
       }
+      for (let j = atual.length - 1; j >= 0; j--) {
+        if (cabecalho.indexOf(atual[j]) < 0) { f.deleteColumn(j + 1); atual.splice(j, 1); }
+      }
+      cabecalho.forEach((c, i) => {
+        const j = atual.indexOf(c);
+        if (j === i) return;
+        if (j < 0) {
+          if (i < atual.length) f.insertColumnBefore(i + 1); else f.insertColumnAfter(Math.max(atual.length, 1));
+          atual.splice(i, 0, c);
+        } else {
+          f.moveColumns(f.getRange(1, j + 1), i + 1);
+          atual.splice(i, 0, atual.splice(j, 1)[0]);
+        }
+      });
+      f.getRange(1, 1, 1, cabecalho.length).setValues([cabecalho]).setFontWeight('bold');
+      f.setFrozenRows(1);
     }
   }
   if (!f) {
