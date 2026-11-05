@@ -342,7 +342,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.6.3';
+var APP_VERSION='3.6.4';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
@@ -924,7 +924,6 @@ function renderSummary(){
     el('thead',{},[el('tr',{},[el('th',{},['Classe']), el('th',{},['Chegada']), el('th',{},['Partida']), el('th',{},['Total'])])]), tb,
     el('tfoot',{},[el('tr',{},[el('td',{},['Total']), el('td',{class:'num'},[g1]), el('td',{class:'num'},[g2]), el('td',{class:'num'},[g1+g2])])]) ])]));
   scr.appendChild(el('button',{class:'btn btn-accent btn-block btn-lg', type:'button', onclick:function(){ exportCsv(s); }},[ico('download'), 'Exportar CSV']));
-  scr.appendChild(el('button',{class:'btn btn-block', type:'button', onclick:exportBackup},['Cópia de segurança (todas as contagens)']));
   scr.appendChild(footer());
   app.appendChild(scr);
 }
