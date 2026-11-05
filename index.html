@@ -315,7 +315,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.4';
+var APP_VERSION='3.5';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
@@ -363,20 +363,19 @@ function ico(name){ return el('span',{html:UI[name], style:'display:inline-flex'
 var CATS = [
   {id:'NM', full:'Não motorizados', short:'Não motorizados', color:'var(--c-nm)'},
   {id:'MC', full:'Motociclos', short:'Motociclos', color:'var(--c-mc)'},
-  {id:'LP', full:'Ligeiro de passageiros', short:'Pessoas', color:'var(--c-lp)', grupo:'L'},
+  {id:'LP', full:'Ligeiro de passageiros', short:'Passag.', color:'var(--c-lp)', grupo:'L'},
   {id:'LM', full:'Ligeiro de mercadorias', short:'Merc.', color:'var(--c-lm)', grupo:'L'},
   {id:'LX', full:'Ligeiro misto', short:'Misto', color:'var(--c-lx)', grupo:'L'},
-  {id:'PP', full:'Pesado de passageiros', short:'Pessoas', color:'var(--c-pp)', grupo:'P', pes:true},
-  {id:'PM', full:'Pesado de mercadorias', short:'Merc.', color:'var(--c-pm)', grupo:'P', pes:true},
-  {id:'PX', full:'Pesado misto', short:'Misto', color:'var(--c-px)', grupo:'P', pes:true}
+  {id:'PP', full:'Pesado de passageiros', short:'Passageiros', color:'var(--c-pp)', grupo:'P', pes:true},
+  {id:'PM', full:'Pesado de mercadorias', short:'Mercadorias', color:'var(--c-pm)', grupo:'P', pes:true}
 ];
 var ORDER = CATS.map(function(c){ return c.id; });
-// ecrã de contagem: duas classes com botão próprio e dois grupos com três tipos cada
+// ecrã de contagem: duas classes com botão próprio; ligeiros com três tipos e pesados com dois
 var LAYOUT = [ {id:'NM'}, {id:'MC'},
   {grupo:'L', nome:'Ligeiros', icon:'LP', color:'var(--c-lp)', ids:['LP','LM','LX']},
-  {grupo:'P', nome:'Pesados', icon:'PM', color:'var(--c-pm)', ids:['PP','PM','PX']} ];
+  {grupo:'P', nome:'Pesados', icon:'PM', color:'var(--c-pm)', ids:['PP','PM']} ];
 var CAT_BY_ID = {}; CATS.forEach(function(c){ CAT_BY_ID[c.id]=c; });
-function normCat(c){ return /^PM/.test(c) ? 'PM' : c; }   // sessões antigas com PM2/PM3/PM4
+function normCat(c){ return /^PM/.test(c) || c==='PX' ? 'PM' : c; }   // sessões antigas: PM2/PM3/PM4 e pesado misto (PX) contam como PM
 function isPes(id){ return !!(CAT_BY_ID[id] && CAT_BY_ID[id].pes); }
 
 // ---------- armazenamento ----------
@@ -552,7 +551,7 @@ function sessionLine(s){
   return [s.id, dISO(s.startedAt), r.INICIO, r.FIM, r1(r.DUR_MIN), r.N_PAUSAS, r.OBSERV, r.SENT1_CHEG, r.SENT2_PART,
     s.lat==null?'':+s.lat.toFixed(6), s.lon==null?'':+s.lon.toFixed(6), s.acc==null?'':Math.round(s.acc), r.POS_ORIGEM]
     .concat([].concat.apply([], ORDER.map(function(c){ return [r[c+'_CHEG'], r[c+'_PART']]; })))
-    .concat([r.TOT_CHEG, r.TOT_PART, r.TOTAL, r1(r.PESAD_PCT), r1(r.VEIC_HORA), s.appVersion||APP_VERSION,
+    .concat([r.TOT_CHEG, r.TOT_PART, r.TOTAL, r1(r.PESAD_PCT), r1(r.VEIC_HORA), 'v'+(s.appVersion||APP_VERSION),  // prefixo evita que a folha leia «3.5» como data
     s.lat==null?'':'https://maps.google.com/?q='+s.lat.toFixed(6)+','+s.lon.toFixed(6)]);
 }
 function sessionEvents(s){ return eventList(s).map(function(e){ return [s.id, e.t, dtLocal(e.t), e.tipo, e.dir?'S'+e.dir:'', e.cat||'']; }); }
@@ -809,7 +808,7 @@ function groupCell(s, L, d, t, onChange){
   function close(){ clearTimeout(tm); tm=null; cell.classList.remove('open'); main.setAttribute('aria-expanded','false'); }
   function arm(ms){ clearTimeout(tm); tm=setTimeout(function(){ if(trio.querySelector('.fix') || trio.querySelector('.holding')){ arm(1500); return; } close(); }, ms); }
   function open(){ if(s.paused) return; cell.classList.add('open'); main.setAttribute('aria-expanded','true'); arm(5000); if(navigator.vibrate){ try{ navigator.vibrate(8); }catch(e){} } }
-  var trio=el('div',{class:'trio'}, L.ids.map(function(id){ return countButton(s, CAT_BY_ID[id], d, t[id][d], changed, true, function(){ arm(350); }); }));
+  var trio=el('div',{class:'trio', style:'grid-template-columns:repeat('+L.ids.length+',minmax(0,1fr))'}, L.ids.map(function(id){ return countButton(s, CAT_BY_ID[id], d, t[id][d], changed, true, function(){ arm(350); }); }));
   trio.addEventListener('pointerdown', function(){ arm(5000); });
   main.addEventListener('click', open);
   main.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); open(); } });
