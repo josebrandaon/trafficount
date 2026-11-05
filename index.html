@@ -302,13 +302,14 @@
   .chart{ display:flex; flex-direction:column; gap:10px; }
   .chart-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
   .chart-head b{ font-size:14px; }
+  .chart-sub{ font-size:12px; color:var(--ink-faint); margin-top:-6px; }
   .legend{ display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft); }
   .legend i{ width:10px; height:10px; border-radius:3px; display:inline-block; margin-left:6px; }
   .crow2{ display:grid; grid-template-columns:minmax(0,40%) 1fr; gap:10px; align-items:center; }
   .clab{ font-size:12.5px; color:var(--ink-soft); line-height:1.2; }
   .cbars{ display:flex; flex-direction:column; gap:3px; min-width:0; }
   .cbar{ display:flex; align-items:center; gap:6px; height:12px; }
-  .cbar .fill{ display:block; height:100%; min-width:2px; border-radius:0 4px 4px 0; }
+  .cbar .fill{ display:block; height:100%; border-radius:0 4px 4px 0; flex:none; }
   .cbar .fill.d1{ background:var(--s1); } .cbar .fill.d2{ background:var(--s2); }
   .cbar .val{ font-size:11.5px; font-weight:600; color:var(--ink-soft); }
   .tiles{ display:grid; grid-template-columns:1fr 1fr 1.2fr; gap:8px; }
@@ -346,7 +347,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.6.6';
+var APP_VERSION='3.6.7';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
@@ -912,15 +913,18 @@ function renderSummary(){
     el('div',{class:'tile'},[el('div',{class:'k'},['Chegada']), el('div',{class:'v num'},[g1])]),
     el('div',{class:'tile'},[el('div',{class:'k'},['Partida']), el('div',{class:'v num'},[g2])]),
     el('div',{class:'tile grand'},[el('div',{class:'k'},['Total']), el('div',{class:'v num'},[g1+g2])]) ]));
-  // gráfico de barras: veículos por classe, chegada e partida lado a lado
-  var mx=1; ORDER.forEach(function(id){ mx=Math.max(mx, t[id][1], t[id][2]); });
-  var chart=el('div',{class:'panel chart'},[el('div',{class:'chart-head'},[el('b',{},['Veículos por classe']),
-    el('span',{class:'legend'},[el('i',{style:'background:var(--s1)'}), 'Chegada', el('i',{style:'background:var(--s2)'}), 'Partida'])])]);
-  ORDER.forEach(function(id){ var a=t[id][1], b=t[id][2];
+  // gráfico de barras: composição por classe em % do total de cada sentido (escala fixa, nunca sai da caixa)
+  var pc=function(v,tot){ return tot ? 100*v/tot : 0; }, mx=1;
+  ORDER.forEach(function(id){ mx=Math.max(mx, pc(t[id][1],g1), pc(t[id][2],g2)); });
+  var fmtp=function(v){ return (v>0 && v<1 ? '<1' : String(Math.round(v)))+'%'; };
+  var chart=el('div',{class:'panel chart'},[el('div',{class:'chart-head'},[el('b',{},['Composição por classe']),
+    el('span',{class:'legend'},[el('i',{style:'background:var(--s1)'}), 'Chegada', el('i',{style:'background:var(--s2)'}), 'Partida'])]),
+    el('div',{class:'chart-sub'},['Percentagem dos veículos de cada sentido'])]);
+  ORDER.forEach(function(id){ var a=pc(t[id][1],g1), b=pc(t[id][2],g2);
     chart.appendChild(el('div',{class:'crow2'},[el('div',{class:'clab'},[CAT_BY_ID[id].full]),
       el('div',{class:'cbars'},[
-        el('div',{class:'cbar'},[el('span',{class:'fill d1', style:'width:'+(100*a/mx)+'%'}), el('span',{class:'val num'},[a])]),
-        el('div',{class:'cbar'},[el('span',{class:'fill d2', style:'width:'+(100*b/mx)+'%'}), el('span',{class:'val num'},[b])]) ]) ])); });
+        el('div',{class:'cbar'},[el('span',{class:'fill d1', style:'width:calc((100% - 38px) * '+(a/mx).toFixed(4)+')'}), el('span',{class:'val num'},[fmtp(a)])]),
+        el('div',{class:'cbar'},[el('span',{class:'fill d2', style:'width:calc((100% - 38px) * '+(b/mx).toFixed(4)+')'}), el('span',{class:'val num'},[fmtp(b)])]) ]) ])); });
   scr.appendChild(chart);
   var tb=el('tbody');
   ORDER.forEach(function(id){ var a=t[id][1], b=t[id][2]; tb.appendChild(el('tr',{},[el('td',{},[el('i',{class:'dot', style:'background:'+CAT_BY_ID[id].color}), CAT_BY_ID[id].full]), el('td',{class:'num'},[a]), el('td',{class:'num'},[b]), el('td',{class:'num'},[a+b])])); });
