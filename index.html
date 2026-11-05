@@ -456,7 +456,7 @@ function shpRecord(s){
   var r={ ID:s.id, DATA:d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate()), INICIO:hm(s.startedAt), FIM:s.endedAt?hm(s.endedAt):'', ESTADO:s.endedAt?'concluida':'em curso',
     DUR_MIN:elapsed(s)/60000, N_PAUSAS:s.pauses.length, OBSERV:s.observador||'', SENT1_CHEG:dirTxt(s,1), SENT2_PART:dirTxt(s,2),
     LAT:s.lat, LON:s.lon, PREC_M:s.acc, POS_ORIGEM:s.posManual?'mapa':'gps',
-    TOT_CHEG:a, TOT_PART:b, TOTAL:a+b, PESAD_PCT:(a+b)?100*pes/(a+b):null, VEIC_HORA:h>0?(a+b)/h:null };
+    TOT_CHEG:a, TOT_PART:b, TOTAL:a+b, PESAD_PCT:(a+b-t.NM[1]-t.NM[2])?100*pes/(a+b-t.NM[1]-t.NM[2]):null, VEIC_HORA:h>0?(a+b)/h:null };
   ORDER.forEach(function(c){ r[c+'_CHEG']=t[c][1]; r[c+'_PART']=t[c][2]; });
   return r;
 }
