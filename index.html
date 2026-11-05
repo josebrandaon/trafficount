@@ -315,7 +315,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.3.1';
+var APP_VERSION='3.3.2';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
@@ -593,27 +593,27 @@ function cloudPanel(){
   var cfg=cloudCfg(), box=el('div',{class:'panel cloud'});
   if(cloudEdit || !cfg){
     if(!cloudEdit){
-      box.appendChild(el('div',{class:'cloud-head'},[el('span',{class:'cloud-ico', html:UI.cloudoff}), el('div',{class:'cloud-txt'},[el('b',{},['Nuvem desligada']), el('small',{},['Junte as contagens da equipa numa Google Sheet.'])])]));
+      box.appendChild(el('div',{class:'cloud-head'},[el('span',{class:'cloud-ico', html:UI.cloudoff}), el('div',{class:'cloud-txt'},[el('b',{},['Nuvem desligada']), el('small',{},['Reúna as contagens da equipa numa base de dados central.'])])]));
       box.appendChild(el('button',{class:'btn btn-soft btn-block', type:'button', onclick:function(){ cloudEdit=true; render(); }},['Configurar ligação']));
       return box;
     }
-    var fU=field('URL da aplicação web (Apps Script)',null,'https://script.google.com/macros/s/…/exec', cfg?cfg.url:'', true);
-    var fC=field('Código da equipa',null,'o código definido no script', cfg?cfg.codigo:'', true);
+    var fU=field('Endereço do servidor',null,'https://…/exec', cfg?cfg.url:'', true);
+    var fC=field('Código da equipa',null,'fornecido pelo coordenador', cfg?cfg.codigo:'', true);
     fU.i.setAttribute('inputmode','url'); fU.i.setAttribute('autocapitalize','off'); fC.i.setAttribute('autocapitalize','off');
     var msg=el('div',{class:'note'});
     var testBtn=el('button',{class:'btn btn-accent', type:'button'},['Testar e guardar']);
     testBtn.addEventListener('click', function(){
       var url=fU.i.value.trim(), codigo=fC.i.value.trim();
-      if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(url)){ msg.style.color='var(--danger)'; msg.textContent='O URL deve começar por https://script.google.com/macros/s/ e terminar em /exec.'; return; }
+      if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(url)){ msg.style.color='var(--danger)'; msg.textContent='Endereço inválido. Confirme o endereço fornecido pelo coordenador.'; return; }
       if(!codigo){ msg.style.color='var(--danger)'; msg.textContent='Indique o código da equipa.'; return; }
       testBtn.disabled=true; msg.style.color=''; msg.textContent='A testar a ligação…';
       postJSON(url, {codigo:codigo, teste:true}).then(function(r){
         testBtn.disabled=false;
-        if(r && r.ok){ pref('cloud', {url:url, codigo:codigo}); cloudEdit=false; toast('Ligação OK · '+(r.folha||'Google Sheet')); render(); syncNow(false); }
-        else { msg.style.color='var(--danger)'; msg.textContent = r && r.erro==='codigo' ? 'O servidor respondeu, mas o código da equipa não coincide com o do script.' : 'O servidor respondeu com erro: '+(r && r.erro); }
-      }).catch(function(){ testBtn.disabled=false; msg.style.color='var(--danger)'; msg.textContent='Não foi possível contactar o servidor. Confirme o URL, a ligação à internet e se a implementação está com acesso «Qualquer pessoa».'; });
+        if(r && r.ok){ pref('cloud', {url:url, codigo:codigo}); cloudEdit=false; toast('Ligação estabelecida com o servidor'); render(); syncNow(false); }
+        else { msg.style.color='var(--danger)'; msg.textContent = r && r.erro==='codigo' ? 'Código da equipa inválido.' : 'O servidor devolveu um erro. Tente novamente mais tarde.'; }
+      }).catch(function(){ testBtn.disabled=false; msg.style.color='var(--danger)'; msg.textContent='Não foi possível contactar o servidor. Confirme o endereço e a ligação à internet.'; });
     });
-    box.appendChild(el('div',{class:'cloud-head'},[el('span',{class:'cloud-ico', html:UI.gear}), el('div',{class:'cloud-txt'},[el('b',{},['Ligação à Google Sheet']), el('small',{},['Cole o URL e o código indicados no script.'])])]));
+    box.appendChild(el('div',{class:'cloud-head'},[el('span',{class:'cloud-ico', html:UI.gear}), el('div',{class:'cloud-txt'},[el('b',{},['Ligação ao servidor']), el('small',{},['Introduza o endereço e o código da equipa.'])])]));
     box.appendChild(el('div',{class:'fields'},[fU.w, fC.w]));
     box.appendChild(msg);
     var row=el('div',{class:'tools'},[testBtn, el('button',{class:'btn', type:'button', onclick:function(){ cloudEdit=false; render(); }},['Cancelar'])]);
@@ -625,7 +625,7 @@ function cloudPanel(){
   var state = syncing ? 'A enviar…' : (n ? (n===1?'1 contagem por enviar':n+' contagens por enviar') : 'Tudo enviado');
   box.appendChild(el('div',{class:'cloud-head'},[
     el('span',{class:'cloud-ico '+(n?'pend':'ok'), html:UI.cloudfill}),
-    el('div',{class:'cloud-txt'},[el('b',{},[state]), el('small',{},['Google Sheet'+(last ? ' · último envio '+dHuman(last)+' '+hm(last) : ' · ainda sem envios')])]) ]));
+    el('div',{class:'cloud-txt'},[el('b',{},[state]), el('small',{},[last ? 'Último envio: '+dHuman(last)+' às '+hm(last) : 'Ainda sem envios para o servidor'])]) ]));
   var send=el('button',{class:'btn btn-soft', type:'button', onclick:function(){ syncNow(true); }},[ico('cloudup'), 'Enviar agora']);
   if(syncing || !n) send.disabled=true;
   box.appendChild(el('div',{class:'tools'},[send, el('button',{class:'btn', type:'button', onclick:function(){ cloudEdit=true; render(); }},['Configurar'])]));
@@ -967,7 +967,7 @@ function renderList(){
   scr.appendChild(el('div',{class:'section-label'},['Exportar e cópia de segurança']));
   if(ids.length) scr.appendChild(el('button',{class:'btn btn-block', type:'button', onclick:exportShp},[ico('map'), 'Exportar pontos (SHP)']));
   scr.appendChild(el('div',{class:'tools'},[el('button',{class:'btn', type:'button', onclick:exportBackup},[ico('download'), 'Exportar JSON']), el('button',{class:'btn', type:'button', onclick:function(){ fi.click(); }},[ico('upload'), 'Importar JSON']), fi]));
-  scr.appendChild(el('div',{class:'note'},[(cloudCfg() ? 'As contagens terminadas são enviadas para a Google Sheet quando houver internet. Exporte também a cópia de segurança no fim de cada turno.' : 'Os dados ficam só neste telemóvel. Exporte o CSV e a cópia de segurança no fim de cada turno.')+(storageOk?'':' Atenção: o armazenamento local está bloqueado neste navegador; exporte antes de fechar.')]));
+  scr.appendChild(el('div',{class:'note'},[(cloudCfg() ? 'As contagens concluídas são sincronizadas automaticamente com o servidor sempre que houver ligação à internet. Recomenda-se exportar uma cópia de segurança no final de cada turno.' : 'Sem ligação ao servidor, os dados ficam guardados apenas neste dispositivo. No final de cada turno, exporte o CSV e a cópia de segurança.')+(storageOk?'':' Atenção: o armazenamento local está bloqueado; exporte os dados antes de fechar a aplicação.')]));
   scr.appendChild(footer());
   app.appendChild(scr);
 }
@@ -978,7 +978,7 @@ function applyLink(){
   if(!m) return false;
   try{
     var j=JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))));
-    if(/^https:\/\/script\.google\.com\//.test(j.url) && j.codigo){ pref('cloud', {url:j.url, codigo:j.codigo}); setTimeout(function(){ toast('Telemóvel ligado à Google Sheet da equipa'); }, 300); view = view==='count' ? 'count' : 'list'; }
+    if(/^https:\/\/script\.google\.com\//.test(j.url) && j.codigo){ pref('cloud', {url:j.url, codigo:j.codigo}); setTimeout(function(){ toast('Dispositivo ligado ao servidor da equipa'); }, 300); view = view==='count' ? 'count' : 'list'; }
   }catch(e){}
   try{ history.replaceState(null, '', location.pathname); }catch(e){ location.hash=''; }
   return true;
