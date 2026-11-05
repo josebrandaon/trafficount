@@ -120,7 +120,7 @@
   @media (max-width:360px){ .fields{ grid-template-columns:1fr; } }
   .field{ display:flex; flex-direction:column; gap:6px; min-width:0; }
   .field.full{ grid-column:1 / -1; }
-  .field label{ font-size:12.5px; font-weight:600; color:var(--ink-soft); display:flex; align-items:center; gap:7px; letter-spacing:.005em; }
+  .field label{ font-size:16px; font-weight:600; color:var(--ink-soft); display:flex; align-items:center; gap:7px; letter-spacing:.005em; }
   .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; flex:none; }
   .field input{ font-family:var(--font); font-size:16px; padding:0 12px; height:48px; border-radius:12px; border:1px solid var(--border);
     background:var(--field); color:var(--ink); width:100%; min-width:0; transition:border-color .12s, background-color .12s; }
@@ -315,7 +315,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.3.2';
+var APP_VERSION='3.3.3';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
@@ -665,8 +665,8 @@ function renderStart(){
   gpsLabel(pos ? 'Atualizar localização' : 'Captar localização');
   scr.appendChild(gpsBtn); scr.appendChild(line);
 
-  var fS1=field('Sentido 1 · Chegada','var(--s1)','ex.: Vindo do interior de Santiago', pref('dir1')||'');
-  var fS2=field('Sentido 2 · Partida','var(--s2)','ex.: Da Cidade da Praia para o interior', pref('dir2')||'');
+  var fS1=field('Chegada',null,'ex.: Vindo do interior de Santiago', pref('dir1')||'');
+  var fS2=field('Partida',null,'ex.: Da Cidade da Praia para o interior', pref('dir2')||'');
   var fObs=field('Observador',null,'nome de quem conta', pref('obs')||'', true);
   scr.appendChild(el('div',{class:'fields'},[fS1.w, fS2.w, fObs.w]));
 
