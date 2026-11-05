@@ -247,6 +247,10 @@
   .stats small{ font-size:11.5px; color:var(--ink-soft); }
   .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   .row .push{ margin-left:auto; }
+  .cardlist{ display:flex; flex-direction:column; gap:10px; }
+  .cardlist.scrolls{ max-height:min(52vh, 440px); overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
+    padding:8px; margin:0 -2px; border-radius:var(--r-lg); background:var(--surface-2); border:1px solid var(--border);
+    box-shadow:inset 0 -14px 12px -12px rgba(15,23,42,.18), inset 0 14px 12px -12px rgba(15,23,42,.10); scrollbar-width:thin; }
   .listhead{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:6px 2px -2px; }
   .listhead .section-label{ margin:0; }
   .selbtn{ min-height:32px; padding:4px 10px; font-size:13px; font-weight:600; color:var(--primary); }
@@ -315,7 +319,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.5.2';
+var APP_VERSION='3.6';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
@@ -587,7 +591,7 @@ function syncNow(manual){
 }
 window.addEventListener('online', function(){ syncNow(false); });
 
-var cloudEdit=false, openCard=null, selMode=false, selSet={};
+var cloudEdit=false, openCard=null, selMode=false, selSet={}, listScroll=0;
 function cloudPanel(){
   var cfg=cloudCfg(), box=el('div',{class:'panel cloud'});
   if(cloudEdit || !cfg){
@@ -917,13 +921,15 @@ function renderList(){
   var dark = isDark();
   scr.appendChild(el('div',{class:'bar'},[el('h1',{class:'brand'},[el('img',{src:'icons/icon-192.png', alt:'', width:'32', height:'32'}), 'TraffiCount']),
     el('button',{class:'btn btn-sm', type:'button', 'aria-pressed':String(dark), onclick:function(){ setTheme(dark?'light':'dark'); render(); }},[ico(dark?'sun':'moon'), dark?'Modo claro':'Modo escuro']) ]));
-  scr.appendChild(el('button',{class:'btn btn-accent btn-block btn-lg', type:'button', onclick:function(){ go('start'); }},[ico('plus'), 'Nova contagem']));
+  scr.appendChild(el('button',{class:'btn btn-accent btn-block btn-lg', type:'button', onclick:function(){ listScroll=0; go('start'); }},[ico('plus'), 'Nova contagem']));
   var ids=DB.order.filter(function(id){ return DB.sessions[id]; });
   if(!ids.length){ selMode=false; selSet={}; }
   Object.keys(selSet).forEach(function(k){ if(!DB.sessions[k]) delete selSet[k]; });
   if(ids.length) scr.appendChild(el('div',{class:'listhead'},[el('div',{class:'section-label'},['Contagens · '+ids.length]),
     el('button',{class:'btn btn-sm btn-ghost selbtn', type:'button', onclick:function(){ var y=window.scrollY; selMode=!selMode; selSet={}; openCard=null; render(); window.scrollTo(0,y); }},[selMode?'Cancelar':'Selecionar']) ]));
   if(!ids.length) scr.appendChild(el('div',{class:'empty'},['Ainda não há contagens neste telemóvel.']));
+  var clist=el('div',{class:'cardlist'+(ids.length>4?' scrolls':'')});
+  clist.addEventListener('scroll', function(){ listScroll=clist.scrollTop; }, {passive:true});
   ids.forEach(function(id){
     var s=DB.sessions[id], tt=totals(s), a=0, b=0; ORDER.forEach(function(c){ a+=tt[c][1]; b+=tt[c][2]; });
     var del=el('button',{class:'btn btn-sm btn-ghost push', type:'button', style:'color:var(--danger)'},[ico('trash'), 'Eliminar']), armed=false;
@@ -957,8 +963,9 @@ function renderList(){
         el('button',{class:'btn btn-sm btn-soft', type:'button', onclick:function(){ DB.activeId=id; save(); go(s.endedAt?'summary':'count'); }},[s.endedAt?'Ver detalhes':'Continuar']),
         el('button',{class:'btn btn-sm', type:'button', onclick:function(){ exportCsv(s); }},[ico('download'), 'CSV']), del ])
     ].forEach(function(x){ card.appendChild(x); }); }
-    scr.appendChild(card);
+    clist.appendChild(card);
   });
+  if(ids.length) scr.appendChild(clist);
   if(selMode) scr.appendChild(selBar(ids));
   var fi=el('input',{type:'file', accept:'.json,application/json'}); fi.addEventListener('change', function(){ if(fi.files[0]) importBackup(fi.files[0]); fi.value=''; });
   scr.appendChild(el('div',{class:'section-label'},['Carregar para o servidor']));
@@ -970,6 +977,7 @@ function renderList(){
   scr.appendChild(el('div',{class:'note'},['Recomenda-se exportar uma cópia de segurança (JSON) no final de cada turno.'+(storageOk?'':' Atenção: o armazenamento local está bloqueado; exporte os dados antes de fechar a aplicação.')]));
   scr.appendChild(footer());
   app.appendChild(scr);
+  if(clist.isConnected) clist.scrollTop=listScroll;
 }
 
 // link de configuração: …/trafficount/#ligar=<base64 de {"url":…,"codigo":…}> liga o telemóvel à folha e limpa o endereço
