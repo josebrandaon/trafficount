@@ -315,7 +315,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.5.1';
+var APP_VERSION='3.5.2';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
@@ -961,7 +961,7 @@ function renderList(){
   });
   if(selMode) scr.appendChild(selBar(ids));
   var fi=el('input',{type:'file', accept:'.json,application/json'}); fi.addEventListener('change', function(){ if(fi.files[0]) importBackup(fi.files[0]); fi.value=''; });
-  scr.appendChild(el('div',{class:'section-label'},['Envio para o servidor']));
+  scr.appendChild(el('div',{class:'section-label'},['Carregar para o servidor']));
   scr.appendChild(cloudPanel());
   scr.appendChild(el('div',{class:'note'},[cloudCfg() ? 'As contagens concluídas são enviadas automaticamente para o servidor sempre que houver ligação à internet.' : 'Sem ligação ao servidor, os dados ficam guardados apenas neste dispositivo.']));
   scr.appendChild(el('div',{class:'section-label'},['Importar e exportar contagens']));
