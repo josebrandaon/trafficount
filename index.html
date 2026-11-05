@@ -249,11 +249,12 @@
   .cardtoggle:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   .card.open{ border-color:var(--border-strong); box-shadow:var(--shadow-lift); }
   .card .t{ font-weight:700; font-size:15.5px; letter-spacing:-.01em; }
-  .card .s{ font-size:13px; color:var(--ink-soft); display:flex; flex-wrap:wrap; gap:4px 12px; }
+  .card .s{ font-size:13px; color:var(--ink-soft); display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 12px; }
   .card .s span{ display:inline-flex; align-items:center; gap:5px; }
   .card .s svg{ width:14px; height:14px; color:var(--ink-faint); }
-  .stats{ display:flex; gap:16px; }
-  .stats div{ display:flex; flex-direction:column; }
+  .stats{ display:grid; grid-template-columns:repeat(4,auto); justify-content:space-between; gap:8px; }
+  .stats div{ display:flex; flex-direction:column; align-items:center; }
+  .stats div:first-child{ align-items:flex-start; } .stats div:last-child{ align-items:flex-end; }
   .stats b{ font-size:18px; font-weight:700; line-height:1.1; }
   .stats small{ font-size:11.5px; color:var(--ink-soft); }
   .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
@@ -345,7 +346,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.6.5';
+var APP_VERSION='3.6.6';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
