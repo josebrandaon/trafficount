@@ -315,7 +315,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.5';
+var APP_VERSION='3.5.1';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
@@ -961,11 +961,13 @@ function renderList(){
   });
   if(selMode) scr.appendChild(selBar(ids));
   var fi=el('input',{type:'file', accept:'.json,application/json'}); fi.addEventListener('change', function(){ if(fi.files[0]) importBackup(fi.files[0]); fi.value=''; });
-  scr.appendChild(el('div',{class:'section-label'},['Nuvem, exportar e importar']));
+  scr.appendChild(el('div',{class:'section-label'},['Envio para o servidor']));
   scr.appendChild(cloudPanel());
+  scr.appendChild(el('div',{class:'note'},[cloudCfg() ? 'As contagens concluídas são enviadas automaticamente para o servidor sempre que houver ligação à internet.' : 'Sem ligação ao servidor, os dados ficam guardados apenas neste dispositivo.']));
+  scr.appendChild(el('div',{class:'section-label'},['Importar e exportar contagens']));
+  scr.appendChild(el('div',{class:'tools'},[el('button',{class:'btn', type:'button', onclick:function(){ fi.click(); }},[ico('upload'), 'Importar JSON']), el('button',{class:'btn', type:'button', onclick:exportBackup},[ico('download'), 'Exportar JSON']), fi]));
   if(ids.length) scr.appendChild(el('button',{class:'btn btn-block', type:'button', onclick:exportShp},[ico('map'), 'Exportar pontos (SHP)']));
-  scr.appendChild(el('div',{class:'tools'},[el('button',{class:'btn', type:'button', onclick:exportBackup},[ico('download'), 'Exportar JSON']), el('button',{class:'btn', type:'button', onclick:function(){ fi.click(); }},[ico('upload'), 'Importar JSON']), fi]));
-  scr.appendChild(el('div',{class:'note'},[(cloudCfg() ? 'As contagens concluídas são sincronizadas automaticamente com o servidor sempre que houver ligação à internet. Recomenda-se exportar uma cópia de segurança no final de cada turno.' : 'Sem ligação ao servidor, os dados ficam guardados apenas neste dispositivo. No final de cada turno, exporte o CSV e a cópia de segurança.')+(storageOk?'':' Atenção: o armazenamento local está bloqueado; exporte os dados antes de fechar a aplicação.')]));
+  scr.appendChild(el('div',{class:'note'},['Recomenda-se exportar uma cópia de segurança (JSON) no final de cada turno.'+(storageOk?'':' Atenção: o armazenamento local está bloqueado; exporte os dados antes de fechar a aplicação.')]));
   scr.appendChild(footer());
   app.appendChild(scr);
 }
