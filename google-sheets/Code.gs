@@ -16,12 +16,12 @@
 
 const CODIGO_EQUIPA = 'ALTERAR-ESTE-CODIGO';
 
+const CLASSES = ['NM', 'MC', 'LP', 'LM', 'LX', 'PP', 'PM', 'PX'];
 const CABECALHO_SESSOES = [
   'sessao_id', 'data', 'inicio', 'fim', 'duracao_min', 'n_pausas', 'observador',
-  'sentido1_chegada', 'sentido2_saida', 'lat', 'lon', 'precisao_m', 'origem_posicao',
-  'MC_cheg', 'MC_saida', 'LP_cheg', 'LP_saida', 'LM_cheg', 'LM_saida', 'PP_cheg', 'PP_saida', 'PM_cheg', 'PM_saida',
-  'total_cheg', 'total_saida', 'total', 'pesados_pct', 'veic_hora', 'versao_app', 'mapa', 'recebido_em'
-];
+  'sentido1_chegada', 'sentido2_partida', 'lat', 'lon', 'precisao_m', 'origem_posicao'
+].concat(CLASSES.reduce((a, c) => a.concat([c + '_cheg', c + '_part']), []))
+ .concat(['total_cheg', 'total_part', 'total', 'pesados_pct', 'veic_hora', 'versao_app', 'mapa', 'recebido_em']);
 const CABECALHO_EVENTOS = ['sessao_id', 't_ms', 'data_hora', 'tipo', 'sentido', 'categoria'];
 
 function doGet() {
@@ -65,6 +65,21 @@ function doPost(e) {
 
 function obterFolha(ss, nome, cabecalho) {
   let f = ss.getSheetByName(nome);
+  if (f && f.getLastColumn() > 0) {
+    // Cabeçalho de uma versão anterior da app: se a folha tiver dados, guarda-a com outro nome;
+    // se estiver vazia, apenas reescreve o cabeçalho.
+    const atual = f.getRange(1, 1, 1, f.getLastColumn()).getValues()[0].join('|');
+    if (atual !== cabecalho.join('|')) {
+      if (f.getLastRow() > 1) {
+        f.setName(nome + '_antiga_' + Utilities.formatDate(new Date(), 'Atlantic/Cape_Verde', 'yyyyMMdd_HHmm'));
+        f = null;
+      } else {
+        f.clear();
+        f.getRange(1, 1, 1, cabecalho.length).setValues([cabecalho]).setFontWeight('bold');
+        f.setFrozenRows(1);
+      }
+    }
+  }
   if (!f) {
     f = ss.insertSheet(nome);
     f.getRange(1, 1, 1, cabecalho.length).setValues([cabecalho]).setFontWeight('bold');
