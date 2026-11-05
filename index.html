@@ -258,6 +258,9 @@
   .stats small{ font-size:11.5px; color:var(--ink-soft); }
   .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   .row .push{ margin-left:auto; }
+  .cardacts{ display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,.8fr) minmax(0,1fr); gap:6px; }
+  .cardacts .btn{ padding:0 6px; gap:5px; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+
   .cardlist{ display:flex; flex-direction:column; gap:10px; }
   .cardlist.scrolls{ max-height:min(52vh, 440px); overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
     padding:8px; margin:0 -2px; border-radius:var(--r-lg); background:var(--surface-2); border:1px solid var(--border);
@@ -342,7 +345,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.6.4';
+var APP_VERSION='3.6.5';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
@@ -963,8 +966,8 @@ function renderList(){
   clist.addEventListener('scroll', function(){ listScroll=clist.scrollTop; }, {passive:true});
   ids.forEach(function(id){
     var s=DB.sessions[id], tt=totals(s), a=0, b=0; ORDER.forEach(function(c){ a+=tt[c][1]; b+=tt[c][2]; });
-    var del=el('button',{class:'btn btn-sm btn-ghost push', type:'button', style:'color:var(--danger)'},[ico('trash'), 'Eliminar']), armed=false;
-    del.addEventListener('click', function(){ if(!armed){ armed=true; del.textContent='Confirmar eliminação'; setTimeout(function(){ armed=false; del.innerHTML=''; del.appendChild(ico('trash')); del.appendChild(document.createTextNode('Eliminar')); }, 3000); return; }
+    var del=el('button',{class:'btn btn-sm btn-ghost', type:'button', style:'color:var(--danger)'},[ico('trash'), 'Eliminar']), armed=false;
+    del.addEventListener('click', function(){ if(!armed){ armed=true; del.textContent='Confirmar'; setTimeout(function(){ armed=false; del.innerHTML=''; del.appendChild(ico('trash')); del.appendChild(document.createTextNode('Eliminar')); }, 3000); return; }
       delete DB.sessions[id]; DB.order=DB.order.filter(function(x){ return x!==id; }); if(DB.activeId===id) DB.activeId=null; save(); render(); });
     // lista compacta: só a 1.ª linha; tocar abre o registo (um de cada vez)
     var open = !selMode && openCard===id, picked=!!selSet[id];
@@ -990,7 +993,7 @@ function renderList(){
         el('div',{},[el('b',{class:'num', style:'color:var(--s1)'},[a]), el('small',{},['chegada'])]),
         el('div',{},[el('b',{class:'num', style:'color:var(--s2)'},[b]), el('small',{},['partida'])]),
         el('div',{},[el('b',{class:'num'},[dur(elapsed(s))]), el('small',{},['duração'])]) ]),
-      el('div',{class:'row'},[
+      el('div',{class:'cardacts'},[
         el('button',{class:'btn btn-sm btn-soft', type:'button', onclick:function(){ DB.activeId=id; save(); go(s.endedAt?'summary':'count'); }},[s.endedAt?'Ver detalhes':'Continuar']),
         el('button',{class:'btn btn-sm', type:'button', onclick:function(){ exportCsv(s); }},[ico('download'), 'CSV']), del ])
     ].forEach(function(x){ card.appendChild(x); }); }
