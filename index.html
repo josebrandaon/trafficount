@@ -347,7 +347,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.6.7';
+var APP_VERSION='3.6.8';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
@@ -971,7 +971,7 @@ function renderList(){
   clist.addEventListener('scroll', function(){ listScroll=clist.scrollTop; }, {passive:true});
   ids.forEach(function(id){
     var s=DB.sessions[id], tt=totals(s), a=0, b=0; ORDER.forEach(function(c){ a+=tt[c][1]; b+=tt[c][2]; });
-    var del=el('button',{class:'btn btn-sm btn-ghost', type:'button', style:'color:var(--danger)'},[ico('trash'), 'Eliminar']), armed=false;
+    var del=el('button',{class:'btn btn-sm', type:'button', style:'color:var(--danger)'},[ico('trash'), 'Eliminar']), armed=false;
     del.addEventListener('click', function(){ if(!armed){ armed=true; del.textContent='Confirmar'; setTimeout(function(){ armed=false; del.innerHTML=''; del.appendChild(ico('trash')); del.appendChild(document.createTextNode('Eliminar')); }, 3000); return; }
       delete DB.sessions[id]; DB.order=DB.order.filter(function(x){ return x!==id; }); if(DB.activeId===id) DB.activeId=null; save(); render(); });
     // lista compacta: só a 1.ª linha; tocar abre o registo (um de cada vez)
