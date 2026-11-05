@@ -315,7 +315,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.3.3';
+var APP_VERSION='3.4';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
@@ -640,7 +640,7 @@ document.addEventListener('visibilitychange', function(){ if(document.visibility
 
 // ---------- navegação ----------
 var app=document.getElementById('app');
-var view = (DB.activeId && DB.sessions[DB.activeId] && !DB.sessions[DB.activeId].endedAt) ? 'count' : 'start';
+var view = (DB.activeId && DB.sessions[DB.activeId] && !DB.sessions[DB.activeId].endedAt) ? 'count' : 'list';  // abre sempre no menu inicial (lista)
 var timers=[], gpsWatch=null, map=null;
 function cleanup(){ timers.forEach(clearInterval); timers=[]; if(gpsWatch!==null){ try{ navigator.geolocation.clearWatch(gpsWatch); }catch(e){} gpsWatch=null; } if(map){ map.remove(); map=null; } if(view!=='count') wakeOff(); }
 function go(v){ view=v; render(); }
@@ -920,8 +920,6 @@ function renderList(){
     el('button',{class:'btn btn-sm', type:'button', 'aria-pressed':String(dark), onclick:function(){ setTheme(dark?'light':'dark'); render(); }},[ico(dark?'sun':'moon'), dark?'Modo claro':'Modo escuro']) ]));
   scr.appendChild(el('button',{class:'btn btn-accent btn-block btn-lg', type:'button', onclick:function(){ go('start'); }},[ico('plus'), 'Nova contagem']));
   var ids=DB.order.filter(function(id){ return DB.sessions[id]; });
-  scr.appendChild(el('div',{class:'section-label'},['Nuvem']));
-  scr.appendChild(cloudPanel());
   if(!ids.length){ selMode=false; selSet={}; }
   Object.keys(selSet).forEach(function(k){ if(!DB.sessions[k]) delete selSet[k]; });
   if(ids.length) scr.appendChild(el('div',{class:'listhead'},[el('div',{class:'section-label'},['Contagens · '+ids.length]),
@@ -964,7 +962,8 @@ function renderList(){
   });
   if(selMode) scr.appendChild(selBar(ids));
   var fi=el('input',{type:'file', accept:'.json,application/json'}); fi.addEventListener('change', function(){ if(fi.files[0]) importBackup(fi.files[0]); fi.value=''; });
-  scr.appendChild(el('div',{class:'section-label'},['Exportar e cópia de segurança']));
+  scr.appendChild(el('div',{class:'section-label'},['Nuvem, exportar e importar']));
+  scr.appendChild(cloudPanel());
   if(ids.length) scr.appendChild(el('button',{class:'btn btn-block', type:'button', onclick:exportShp},[ico('map'), 'Exportar pontos (SHP)']));
   scr.appendChild(el('div',{class:'tools'},[el('button',{class:'btn', type:'button', onclick:exportBackup},[ico('download'), 'Exportar JSON']), el('button',{class:'btn', type:'button', onclick:function(){ fi.click(); }},[ico('upload'), 'Importar JSON']), fi]));
   scr.appendChild(el('div',{class:'note'},[(cloudCfg() ? 'As contagens concluídas são sincronizadas automaticamente com o servidor sempre que houver ligação à internet. Recomenda-se exportar uma cópia de segurança no final de cada turno.' : 'Sem ligação ao servidor, os dados ficam guardados apenas neste dispositivo. No final de cada turno, exporte o CSV e a cópia de segurança.')+(storageOk?'':' Atenção: o armazenamento local está bloqueado; exporte os dados antes de fechar a aplicação.')]));
