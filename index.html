@@ -233,7 +233,7 @@
   .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:14px 16px; display:flex; flex-direction:column; gap:10px; box-shadow:var(--shadow); }
   .card{ position:relative; }
   .card.closed{ padding-block:12px; }
-  .cardtoggle{ position:absolute; inset:0; background:transparent; border:none; cursor:pointer; border-radius:var(--r-lg); }
+  .cardtoggle{ position:absolute; inset:0; background:transparent; border:none; cursor:pointer; border-radius:var(--r-lg); -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; touch-action:manipulation; }
   .card.open .cardtoggle{ bottom:auto; height:52px; }
   .cardtoggle:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
   .card.open{ border-color:var(--border-strong); box-shadow:var(--shadow-lift); }
@@ -315,7 +315,7 @@
 <script>
 (function(){
 "use strict";
-var APP_VERSION='3.3';
+var APP_VERSION='3.3.1';
 
 // ---------- ícones (perfil lateral, desenho próprio) ----------
 function wheel(x,y,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="currentColor" stroke="var(--chip)" stroke-width="2.4"/><circle cx="'+x+'" cy="'+y+'" r="'+(r*0.36).toFixed(2)+'" fill="var(--chip)"/>'; }
@@ -941,6 +941,13 @@ function renderList(){
     var hb = selMode
       ? el('button',{type:'button', class:'cardtoggle', role:'checkbox', 'aria-checked':String(picked), 'aria-label':'Selecionar contagem de '+dHuman(s.startedAt)+' '+hm(s.startedAt), onclick:function(){ var y=window.scrollY; if(selSet[id]) delete selSet[id]; else selSet[id]=true; render(); window.scrollTo(0,y); }})
       : el('button',{type:'button', class:'cardtoggle', 'aria-expanded':String(open), 'aria-label':(open?'Fechar':'Abrir')+' contagem de '+dHuman(s.startedAt)+' '+hm(s.startedAt), onclick:function(){ var y=window.scrollY; openCard = open ? null : id; render(); window.scrollTo(0,y); }});
+    if(!selMode){ // gesto Android: premir a contagem ~0,6 s entra no modo de seleção com ela marcada
+      var lp=null, lpDone=false;
+      hb.addEventListener('pointerdown', function(){ lpDone=false; clearTimeout(lp); lp=setTimeout(function(){ lpDone=true; if(navigator.vibrate){ try{ navigator.vibrate(20); }catch(e){} } var y=window.scrollY; selMode=true; selSet={}; selSet[id]=true; openCard=null; render(); window.scrollTo(0,y); }, 600); });
+      ['pointerup','pointerleave','pointercancel'].forEach(function(ev){ hb.addEventListener(ev, function(){ clearTimeout(lp); }); });
+      hb.addEventListener('click', function(e){ if(lpDone){ e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+      hb.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+    }
     card.appendChild(top); card.appendChild(hb);
     if(open){ [
       el('div',{class:'s'},[el('span',{},[ico('user'), s.observador||'—']), el('span',{class:'num'},[ico('pin'), coord(s)])]),
