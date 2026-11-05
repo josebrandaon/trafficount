@@ -1,6 +1,6 @@
 // TraffiCount — guarda a aplicação no telemóvel para funcionar sem internet.
 // Ao publicar uma nova versão, altere VERSION para os telemóveis receberem a atualização.
-const VERSION = 'trafficount-v19';
+const VERSION = 'trafficount-v20';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './vendor/leaflet/leaflet.css', './vendor/leaflet/leaflet.js',
